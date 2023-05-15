@@ -68,6 +68,9 @@ def generate_random_coords(G, n_students, n_schools, depot_coords):
 def calculate_travel_times(n_students, n_schools, depot_coords=(ymin, xmin)):
     # generate OSMnx graph
     G = ox.graph_from_bbox(ymax, ymin, xmin, xmax, network_type="drive", simplify=True)
+    # calculate travel times for each edge (in seconds)
+    G = ox.add_edge_speeds(G)
+    G = ox.add_edge_travel_times(G)
     
     # randomly generate student and school coordinates
     coords = generate_random_coords(G, n_students, n_schools, depot_coords)
