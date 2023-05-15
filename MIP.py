@@ -62,9 +62,11 @@ def get_feasible_routes(num_students, num_schools, start_times):
     status = m.Status
     if status in [GRB.INF_OR_UNBD, GRB.INFEASIBLE, GRB.UNBOUNDED]:
         print("Model is either infeasible or unbounded.")
+    
+    print(coords)
 
     solutions = []
-    nSolutions = m.SolCount
+    nSolutions = min(m.SolCount, 10)
     for sol in range(nSolutions):
         m.setParam(GRB.Param.SolutionNumber, sol)
         values = m.Xn
@@ -74,9 +76,9 @@ def get_feasible_routes(num_students, num_schools, start_times):
         #add depot
         route = [1] * (len(ordering)+1)
         route[0] = coords[0]
-
-        for i in range(1,len(ordering)):
-             route[ordering[i]+1] = coords[i]
+        
+        for i in range(len(ordering)):
+             route[ordering[i]+1] = coords[i+1]
 
         solutions.append(route)
 
