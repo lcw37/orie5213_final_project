@@ -2,6 +2,8 @@ import taxicab as tc
 import osmnx as ox
 import numpy as np
 
+xmin, xmax = -73.961004, -73.906759
+ymin, ymax = 40.662075, 40.708213
 
 def tc_length_and_time(G, orig, dest):
     # calculate taxicab shortest route
@@ -64,6 +66,9 @@ def generate_random_coords(G, n_students, n_schools, depot_coords):
 
 
 def calculate_travel_times(G, n_students, n_schools, depot_coords):
+    # generate OSMnx graph
+    G = ox.graph_from_bbox(ymax, ymin, xmin, xmax, network_type="drive", simplify=True)
+    
     # randomly generate student and school coordinates
     coords = generate_random_coords(G, n_students, n_schools, depot_coords)
     
