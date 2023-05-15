@@ -2,30 +2,10 @@ import taxicab as tc
 import osmnx as ox
 import numpy as np
 
-
 xmin, xmax = -73.961004, -73.906759
 ymin, ymax = 40.662075, 40.708213
 
-
 def tc_length_and_time(G, orig, dest):
-    """Calculate the shortest taxicab route between two points and return the length and time it takes to travel it.
-
-    Parameters:
-    -----------
-    G : networkx.MultiDiGraph
-        The road network to compute the route on.
-    orig : tuple
-        A tuple (latitude, longitude) representing the origin point.
-    dest : tuple
-        A tuple (latitude, longitude) representing the destination point.
-
-    Returns:
-    --------
-    tuple of (float, float, list)
-        A tuple of the form (route_length, route_time, taxi_route), where route_length is the length (in meters) of the
-        entire route, route_time is the time (in seconds) it takes to travel the entire route, and taxi_route is a list of
-        nodes representing the taxicab route taken (excluding the origin point but including the destination point).
-    """
     # calculate taxicab shortest route
     taxi_route = None
     eps = 1e-4
@@ -73,25 +53,6 @@ def tc_length_and_time(G, orig, dest):
 
 
 def generate_random_coords(G, n_students, n_schools, depot_coords):
-    """Generate random coordinates for students and schools, and return a dictionary mapping their IDs to coordinates.
-
-    Parameters:
-    -----------
-    G : networkx.MultiDiGraph
-        The road network to sample the points from.
-    n_students : int
-        The number of student locations to generate.
-    n_schools : int
-        The number of school locations to generate.
-    depot_coords : tuple, optional
-        A tuple (latitude, longitude) representing the depot location. Default is (ymin, xmin).
-
-    Returns:
-    --------
-    dict
-        A dictionary mapping the IDs of the student and school locations to their respective coordinate tuples, of the form
-        {depot, students..., schools...}.
-    """
     # randomly sample student and school locations
     random_locs = ox.utils_geo.sample_points(G, n_students + n_schools)
 
@@ -105,24 +66,6 @@ def generate_random_coords(G, n_students, n_schools, depot_coords):
 
 
 def calculate_travel_times(n_students, n_schools, depot_coords=(ymin, xmin)):
-    """Calculate the travel times between all student and school locations.
-
-    Parameters:
-    -----------
-    n_students : int
-        The number of student locations to generate.
-    n_schools : int
-        The number of school locations to generate.
-    depot_coords : tuple, optional
-        A tuple (latitude, longitude) representing the depot location. Default is (ymin, xmin).
-
-    Returns:
-    --------
-    numpy.ndarray
-        An n+1 x n+1 numpy array representing the travel times (in seconds) between all locations, where n = n_students + n_schools.
-        The first row and column of the array represent the depot location, and the remaining rows and columns represent the student
-        and school locations, respectively.
-    """
     # generate OSMnx graph
     G = ox.graph_from_bbox(ymax, ymin, xmin, xmax, network_type="drive", simplify=True)
     # calculate travel times for each edge (in seconds)
@@ -145,36 +88,7 @@ def calculate_travel_times(n_students, n_schools, depot_coords=(ymin, xmin)):
                 travel_times[i, j] = t
         # print(f'progress: {i+1} / {len(coords)}')
     
-    return travel_times
+    return travel_times, coords
 
-
-def generate_random_load_times(n_students, n_schools):
-    """Generate random load times for students and schools, and return a dictionary mapping their IDs to their respective load times.
-
-    Parameters:
-    -----------
-    n_students : int
-        The number of students to generate load times for.
-    n_schools : int
-        The number of schools to generate load times for.
-
-    Returns:
-    --------
-    dict
-        A dictionary mapping the IDs of the student and school locations to their respective load times (in seconds).
-        The load time for the depot location is always 0.
-    """
-    load_times = {}
-    load_times[0] = 0 # depot load time is 0
-    
-    # draw student and school load times from exponential distributions, add 1 min
-    student_load_times = np.random.exponential(scale=1, size=n_students) + 1
-    school_offload_times = np.random.exponential(scale=1, size=n_schools) + 1
-    
-    # add load times to location-loadtime mapping (convert to seconds)
-    for i in range(n_students):
-        load_times[i+1] = student_load_times[i] * 60
-    for i in range(n_schools):
-        load_times[i+n_students+1] = school_offload_times[i] * 60
-        
-    return load_times
+if __name__ == "__main__":
+    print(calculate_travel_times(5,2))
