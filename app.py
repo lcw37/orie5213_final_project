@@ -45,11 +45,16 @@ def generate_routes(n_students, n_schools, mode, location_data, max_routes, cont
     progress_text = 'Done!'
     my_bar.progress(progress_value, text=progress_text)
     
-    container.write('number of routes generated:')
-    container.write(len(plots))
-    for p in plots:
-        container.pyplot(p)
-        # container.write(p)
+    if len(plots) > 0:
+        container.write('Number of routes generated:')
+        container.write(len(plots))
+        for p in plots:
+            container.pyplot(p)
+            # container.write(p)
+    else:
+        container.write('No feasible routes found.')
+        
+    return coords, routes
 
 
 def main():
@@ -103,11 +108,16 @@ def main():
     # generate locations and plot on map
     plots_container = st.container()
     max_routes = plots_container.number_input('Max routes to generate:', 1, value=5)
-    generate = plots_container.button('Generate routes', 
-                        on_click=generate_routes, 
-                        args=(n_students, n_schools, mode, location_data, max_routes, plots_container)
-                        )
+    # generate = plots_container.button('Generate routes', 
+    #                     on_click=generate_routes, 
+    #                     args=(n_students, n_schools, mode, location_data, max_routes, plots_container)
+    #                     )
+    generate = plots_container.button('Generate routes')
+    if generate:
+        result = generate_routes(n_students, n_schools, mode, location_data, max_routes, plots_container)
     
+        # st.write(result[0])
+        # st.write(result[1])
 
 
 

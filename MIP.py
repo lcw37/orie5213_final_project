@@ -83,7 +83,7 @@ def get_feasible_routes(num_students, num_schools, start_times, travel_time, coo
 
         solutions.append(route)
     print('Optimization complete!')
-    return solutions#, G
+    return solutions
 
 
 if __name__ == "__main__":
