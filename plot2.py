@@ -2,6 +2,12 @@ import taxicab as tc
 from taxicab.plot import plot_graph_route
 from osmnx.plot import _save_and_show
 import networkx as nx
+import matplotlib.colors as mcolors
+
+import matplotlib.cm as cm
+import numpy as np
+
+import matplotlib.pyplot as plt
 
 def plot_graph_routes(G, routes, route_colors="r", route_linewidths=4, **pgr_kwargs):
     """
@@ -81,7 +87,7 @@ def plot_graph_routes(G, routes, route_colors="r", route_linewidths=4, **pgr_kwa
 
 
 
-def plot_our_route(G, route):
+def plot_our_route(G, route, coord_mapping, n_students, n_schools):
     
     route_pairs = list(zip(route[:-1], route[1:]))
 
@@ -95,19 +101,45 @@ def plot_our_route(G, route):
             return None, None
         route_legs.append(leg)
         
-    # assign alternating colors to route legs
-    colors = ['r', 'orange', 'yellow']
-    route_colors = []
-    for i in range(len(route_legs)):
-        route_colors.append(colors[i % len(colors)])
+    # assign colors to route legs
+    n_colors = len(route_legs)
+    
+    # colors = ['r', 'orange', 'yellow']
+    # route_colors = []
+    # for i in range(len(route_legs)):
+    #     route_colors.append(colors[i % len(colors)])
         
+    # startcolor = mcolors.to_rgb('lime')
+    # endcolor = mcolors.to_rgb('cornflowerblue')
+    # route_colors = [mcolors.to_hex(color) for color in mcolors.LinearSegmentedColormap.from_list("", [startcolor, endcolor], n_colors)(range(n_colors))]
+    
+    cmap = cm.get_cmap('gist_rainbow')
+    indices = np.linspace(0, 1, n_colors)
+    color_list = [cmap(index) for index in indices]
+    route_colors = [mcolors.to_hex(color) for color in color_list]
+    
+    # point color mapping
+    school_color = 'yellow'
+    student_color = 'r'
+    depot_color = 'green'
+    color_mapping = {}
+    color_mapping[coord_mapping[0]] = depot_color
+    for i in range(n_students):
+        color_mapping[coord_mapping[i+1]] = student_color
+    for i in range(n_schools):
+        color_mapping[coord_mapping[i+n_students+1]] = school_color
+    
+    
+    
     # plot route
     fig, ax = plot_graph_routes(G, route_legs, route_colors)
+    for (y, x) in route:
+        ax.scatter(x=x, y=y, s=200, c=color_mapping[(y, x)])
     return fig, ax
 
 
 
-def plot_our_routes(G, routes):
+def plot_our_routes(G, routes, coord_mapping, n_students, n_schools):
     print('Plotting routes...')
     figs = []
     for route in routes:
@@ -116,7 +148,7 @@ def plot_our_routes(G, routes):
         if not all(isinstance(r, tuple) for r in route):
             continue
         
-        fig, ax = plot_our_route(G, route) # returns None, None if no path exists
+        fig, ax = plot_our_route(G, route, coord_mapping, n_students, n_schools) # returns None, None if no path exists
         # for n in route:
             # ax.scatter(n[1], n[0], c='blue', s=100)
             # print(n)

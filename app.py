@@ -27,8 +27,8 @@ def generate_routes(n_students, n_schools, mode, location_data, max_routes, cont
     
     progress_text = 'Calculating travel times... (this may take a while!)'
     my_bar.progress(progress_value, text=progress_text)
-    travel_time_table, coords = travel_times.calculate_travel_times(G, n_students, n_schools)
-    progress_value + 40
+    travel_time_table, coords = travel_times.calculate_travel_times(G, n_students, n_schools, depot_coords=(40.7283, -73.94060)) # (y, x)
+    progress_value += 40
 
     progress_text = 'Getting start times...'
     my_bar.progress(progress_value, text=progress_text)
@@ -39,10 +39,10 @@ def generate_routes(n_students, n_schools, mode, location_data, max_routes, cont
     my_bar.progress(progress_value, text=progress_text)
     routes, start_time_solutions  = MIP.get_feasible_routes(n_students, n_schools, starting_times, travel_time_table, coords, max_routes)
     progress_value += 20
-    
+
     progress_text = 'Plotting routes...'
     my_bar.progress(progress_value, text=progress_text)
-    plots = plot2.plot_our_routes(G, routes)
+    plots = plot2.plot_our_routes(G, routes, coords, n_students, n_schools)
     progress_value += 20
     
     progress_text = 'Done!'
@@ -51,13 +51,15 @@ def generate_routes(n_students, n_schools, mode, location_data, max_routes, cont
     if len(plots) > 0:
         container.write('Number of routes generated:')
         container.write(len(plots))
-        for p in plots:
-            container.pyplot(p)
+        for i in range(len(plots)):
+            container.pyplot(plots[i])
+            container.write(routes[i])
+            container.write(start_time_solutions[i])
             # container.write(p)
     else:
         container.write('No feasible routes found.')
         
-    return coords, routes
+    return routes, start_time_solutions
 
 
 def main():
@@ -104,7 +106,8 @@ def main():
         location_data = (location, distance)
         mode = 'name'
     else:
-        location_data = (40.708213, 40.662075, -73.961004, -73.906759)
+        # location_data = (40.708213, 40.662075, -73.961004, -73.906759)
+        location_data = (ymax, ymin, xmin, xmax)
         mode = 'bbox'
    
    
@@ -117,7 +120,7 @@ def main():
     #                     )
     generate = plots_container.button('Generate routes')
     if generate:
-        result = generate_routes(n_students, n_schools, mode, location_data, max_routes, plots_container)
+        routes, start_time_solutions = generate_routes(n_students, n_schools, mode, location_data, max_routes, plots_container)
     
         # st.write(result[0])
         # st.write(result[1])
