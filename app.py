@@ -23,23 +23,28 @@ def generate_routes(n_students, n_schools, mode, location_data, max_routes, cont
     progress_text = "Generating graph..."
     my_bar = container.progress(progress_value, text=progress_text)
     G = travel_times.generate_G(mode, location_data)
-    
     progress_value += 10
+    
     progress_text = 'Calculating travel times... (this may take a while!)'
     my_bar.progress(progress_value, text=progress_text)
     travel_time_table, coords = travel_times.calculate_travel_times(G, n_students, n_schools)
+    progress_value + 40
+
+    progress_text = 'Getting start times...'
+    my_bar.progress(progress_value, text=progress_text)
+    starting_times = MIP.generate_start_times(n_schools)
+    progress_value += 10
     
-    progress_value += 40
     progress_text = 'Getting feasible routes...'
     my_bar.progress(progress_value, text=progress_text)
-    routes = MIP.get_feasible_routes(n_students, n_schools, None, travel_time_table, coords, max_routes)
-    
+    routes, start_time_solutions  = MIP.get_feasible_routes(n_students, n_schools, starting_times, travel_time_table, coords, max_routes)
     progress_value += 20
+    
     progress_text = 'Plotting routes...'
     my_bar.progress(progress_value, text=progress_text)
     plots = plot2.plot_our_routes(G, routes)
+    progress_value += 20
     
-    progress_value += 30
     progress_text = 'Done!'
     my_bar.progress(progress_value, text=progress_text)
     
