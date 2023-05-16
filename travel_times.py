@@ -2,8 +2,6 @@ import taxicab as tc
 import osmnx as ox
 import numpy as np
 
-from time import time
-
 
 xmin, xmax = -73.961004, -73.906759
 ymin, ymax = 40.662075, 40.708213
