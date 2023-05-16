@@ -8,8 +8,8 @@ def diff(first, second):
         second = set(second)
         return [item for item in first if item not in second]
 
-def get_feasible_routes(num_students, num_schools, start_times):
-
+def get_feasible_routes(num_students, num_schools, start_times, mode, location_data):
+    print('Setting up mixed-integer program...')
     d = [0]
     P = list(range(1, 1 + num_students))
     S = list(range(num_students + 1, num_students + num_schools + 1))
@@ -26,8 +26,12 @@ def get_feasible_routes(num_students, num_schools, start_times):
     # x_indices = np.arange(len(O)).reshape(len(O), 1)
     # y_indices = np.arange(len(O)).reshape(1, len(O))
     # travel_time = x_indices * y_indices + 2
-    travel_time, coords = travel_times.calculate_travel_times(num_students, num_schools)
+    print('Generating graph...')
+    G = travel_times.generate_G(mode, location_data)
 
+    travel_time, coords = travel_times.calculate_travel_times(G, num_students, num_schools)
+
+    print('Building model...')
     m = gp.Model("bus_route")
     m.Params.OutputFlag = 0 
     #m.Params.PoolSolutions = 10
@@ -57,13 +61,13 @@ def get_feasible_routes(num_students, num_schools, start_times):
 
     m.setObjective(gp.quicksum(travel_time[i,j] * X[i,j,o] for i in L for j in L for o in O), GRB.MINIMIZE)
 
+    print('Optimizing...')
     m.optimize()
 
     status = m.Status
     if status in [GRB.INF_OR_UNBD, GRB.INFEASIBLE, GRB.UNBOUNDED]:
         print("Model is either infeasible or unbounded.")
-    
-    print(coords)
+    # print(coords)
 
     solutions = []
     nSolutions = min(m.SolCount, 10)
@@ -81,8 +85,9 @@ def get_feasible_routes(num_students, num_schools, start_times):
              route[ordering[i]+1] = coords[i+1]
 
         solutions.append(route)
+    print('Done!')
+    return solutions, G
 
-    return solutions
 
 if __name__ == "__main__":
     print(get_feasible_routes(5, 1, None))

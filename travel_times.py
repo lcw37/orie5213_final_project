@@ -7,9 +7,16 @@ xmin, xmax = -73.961004, -73.906759
 ymin, ymax = 40.662075, 40.708213
 
 
-def generate_G():
-     # generate OSMnx graph
-    G = ox.graph_from_bbox(ymax, ymin, xmin, xmax, network_type="drive", simplify=True)
+def generate_G(mode, location_data):
+    # if given a bbox:
+    if mode == 'bbox':
+        ymax, ymin, xmin, xmax = location_data # location_data is a 4-tuple of xy values if 'bbox'
+        G = ox.graph_from_bbox(ymax, ymin, xmin, xmax, network_type="drive", simplify=True)
+    # if given a location name:
+    if mode == 'name':
+        location, distance = location_data # location_data is a (location name, distance) tuple if 'location'
+        G = ox.graph_from_address(location, dist=distance, network_type='drive')
+        
     # calculate travel times for each edge (in seconds)
     G = ox.add_edge_speeds(G)
     G = ox.add_edge_travel_times(G)
@@ -38,19 +45,27 @@ def tc_length_and_time(G, orig, dest):
     # calculate taxicab shortest route
     taxi_route = None
     eps = 1e-4
-    alt = True
+    count = 0
+    _orig, _dest = orig, dest
+    max_tries = 60
     # I encountered a bug in the taxicab source code (tc.distance.shortestpath), this try-except loop works around it
+    # repeatedly add eps to x-coord or y-coord (alternating) until a solution is found
     while taxi_route is None:
         try:
-            taxi_route = tc.distance.shortest_path(G, orig, dest)
+            taxi_route = tc.distance.shortest_path(G, _orig, _dest)
             route_length, interior_nodes, first_segment, last_segment = taxi_route
         except:
-            if alt:
-                orig = (orig[0] + eps, orig[1])
-                alt = False
+            if count == int(max_tries / 2): # reverse direction of search after 30 tries
+                eps = -1e-4
+                _orig = orig
+            if count == max_tries: # stop search after 60 tries
+                return None
+            
+            if count % 2 == 0:
+                _orig = (_orig[0] + eps, _orig[1])
             else:
-                orig = (orig[0], orig[1] + eps)
-                alt = True
+                _orig = (_orig[0], _orig[1] + eps)
+            count += 1
         
     # calculate travel length (in meters) and time (in seconds) of interior nodes
     interior_length = int(sum(ox.utils_graph.get_route_edge_attributes(G, interior_nodes, "length")))
@@ -139,14 +154,19 @@ def calculate_travel_times(G, n_students, n_schools, depot_coords=(ymin, xmin)):
     travel_times = np.zeros((len(coords), len(coords)))
 
     # calculate travel times (in seconds)
+    print('Calculating travel times...')
     for i in coords:
         for j in coords:
             if i != j:
                 orig = coords[i]
                 dest = coords[j]
-                _, t, _ = tc_length_and_time(G, orig, dest)
-                travel_times[i, j] = t
-        # print(f'progress: {i+1} / {len(coords)}')
+                result = tc_length_and_time(G, orig, dest)
+                if result is not None:   
+                    _, t, _ = result
+                    travel_times[i, j] = t
+                else:
+                    travel_times[i, j] = 1000000 # set to arbitrarily large number if no travel time is found?
+        print(f'\tprogress: {i+1} / {len(coords)}')
     
     return travel_times, coords
 
