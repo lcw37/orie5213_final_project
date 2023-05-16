@@ -13,48 +13,43 @@ def __init__():
         st.session_state["n_students"] = route_variables.random_n_students()
         
 
-def display_map(location, distance, n_students, n_schools):
-    G, coords = generate_locations(n_students, n_schools)
-    # st.write(coords)
-    # G = ox.graph_from_address(location, dist=distance, network_type='drive')
-    fig, ax = ox.plot_graph(G, show=False, close=False)
-    
-    for id in coords:
-        ax.scatter(coords[id][1], coords[id][0], c='red', s=100)
-    
-    return fig
-    # map = folium.Map(location=ox.geocode(location), tiles='cartodbpositron')
-    # st_map = st_folium(map, width=700, height=700)
-
-
-
-def generate_locations(n_students, n_schools):
-    G = travel_times.generate_G()
-    coords = travel_times.generate_random_coords(G, n_students, n_schools)
-    return G, coords
-    
-
-    
-    ################
-    
-    
-    
-    
-    
 def get_random_n_students():
     """ Randomly draws a new value for n_students """
     st.session_state["n_students"] = route_variables.random_n_students()
     return
 
-def generate_routes(n_students, n_schools, mode, location_data, container):
-    routes, G = MIP.get_feasible_routes(n_students, n_schools, None, mode, location_data)
+
+def generate_routes(n_students, n_schools, mode, location_data, max_routes, container):
+    
+    progress_value = 0
+    progress_text = "Generating graph..."
+    my_bar = container.progress(progress_value, text=progress_text)
+    G = travel_times.generate_G(mode, location_data)
+    
+    progress_value += 10
+    progress_text = 'Calculating travel times... (this may take a while!)'
+    my_bar.progress(progress_value, text=progress_text)
+    travel_time_table, coords = travel_times.calculate_travel_times(G, n_students, n_schools)
+    
+    progress_value += 40
+    progress_text = 'Getting feasible routes...'
+    my_bar.progress(progress_value, text=progress_text)
+    routes = MIP.get_feasible_routes(n_students, n_schools, None, travel_time_table, coords, max_routes)
+    
+    progress_value += 20
+    progress_text = 'Plotting routes...'
+    my_bar.progress(progress_value, text=progress_text)
     plots = plot2.plot_our_routes(G, routes)
+    
+    progress_value += 30
+    progress_text = 'Done!'
+    my_bar.progress(progress_value, text=progress_text)
+    
     container.write('number of routes generated:')
     container.write(len(plots))
     for p in plots:
         container.pyplot(p)
         # container.write(p)
-
 
 
 def main():
@@ -107,9 +102,10 @@ def main():
    
     # generate locations and plot on map
     plots_container = st.container()
+    max_routes = plots_container.number_input('Max routes to generate:', 1, value=5)
     generate = plots_container.button('Generate routes', 
                         on_click=generate_routes, 
-                        args=(n_students, n_schools, mode, location_data, plots_container)
+                        args=(n_students, n_schools, mode, location_data, max_routes, plots_container)
                         )
     
 

@@ -2,6 +2,8 @@ import taxicab as tc
 import osmnx as ox
 import numpy as np
 
+from time import time
+
 
 xmin, xmax = -73.961004, -73.906759
 ymin, ymax = 40.662075, 40.708213
@@ -47,7 +49,7 @@ def tc_length_and_time(G, orig, dest):
     eps = 1e-4
     count = 0
     _orig, _dest = orig, dest
-    max_tries = 60
+    max_tries = 20
     # I encountered a bug in the taxicab source code (tc.distance.shortestpath), this try-except loop works around it
     # repeatedly add eps to x-coord or y-coord (alternating) until a solution is found
     while taxi_route is None:
@@ -71,6 +73,7 @@ def tc_length_and_time(G, orig, dest):
     interior_length = int(sum(ox.utils_graph.get_route_edge_attributes(G, interior_nodes, "length")))
     interior_time = int(sum(ox.utils_graph.get_route_edge_attributes(G, interior_nodes, "travel_time")))
 
+    # estimate average travel speed along the tail segments
     tails = [first_segment, last_segment]
     speeds = []
     for s in tails:

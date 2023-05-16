@@ -113,10 +113,10 @@ def plot_our_routes(G, routes):
     for route in routes:
         
         # initial check
-        if not all(isinstance(r, tuple) for r in route):  # pragma: no cover
+        if not all(isinstance(r, tuple) for r in route):
             continue
         
-        fig, ax = plot_our_route(G, route)
+        fig, ax = plot_our_route(G, route) # returns None, None if no path exists
         # for n in route:
             # ax.scatter(n[1], n[0], c='blue', s=100)
             # print(n)

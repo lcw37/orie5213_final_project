@@ -8,7 +8,7 @@ def diff(first, second):
         second = set(second)
         return [item for item in first if item not in second]
 
-def get_feasible_routes(num_students, num_schools, start_times, mode, location_data):
+def get_feasible_routes(num_students, num_schools, start_times, travel_time, coords, max_routes=10):
     print('Setting up mixed-integer program...')
     d = [0]
     P = list(range(1, 1 + num_students))
@@ -26,10 +26,7 @@ def get_feasible_routes(num_students, num_schools, start_times, mode, location_d
     # x_indices = np.arange(len(O)).reshape(len(O), 1)
     # y_indices = np.arange(len(O)).reshape(1, len(O))
     # travel_time = x_indices * y_indices + 2
-    print('Generating graph...')
-    G = travel_times.generate_G(mode, location_data)
 
-    travel_time, coords = travel_times.calculate_travel_times(G, num_students, num_schools)
 
     print('Building model...')
     m = gp.Model("bus_route")
@@ -70,7 +67,7 @@ def get_feasible_routes(num_students, num_schools, start_times, mode, location_d
     # print(coords)
 
     solutions = []
-    nSolutions = min(m.SolCount, 10)
+    nSolutions = min(m.SolCount, max_routes)
     for sol in range(nSolutions):
         m.setParam(GRB.Param.SolutionNumber, sol)
         values = m.Xn
@@ -85,8 +82,8 @@ def get_feasible_routes(num_students, num_schools, start_times, mode, location_d
              route[ordering[i]+1] = coords[i+1]
 
         solutions.append(route)
-    print('Done!')
-    return solutions, G
+    print('Optimization complete!')
+    return solutions#, G
 
 
 if __name__ == "__main__":
