@@ -2,11 +2,24 @@ import gurobipy as gp
 from gurobipy import GRB
 import networkx as nx
 import numpy as np
+from datetime import datetime, timedelta
 import travel_times
 
 def diff(first, second):
         second = set(second)
         return [item for item in first if item not in second]
+
+def generate_start_times(num_schools):
+    start_time = datetime.strptime("07:00:00", "%H:%M:%S")
+    end_time = datetime.strptime("09:00:00", "%H:%M:%S")
+
+    time_list = []
+    current_time = end_time
+    for _ in range(num_schools):
+        time_list.append(current_time.strftime("%H:%M:%S"))
+        current_time -= timedelta(minutes=30)
+    
+    return time_list
 
 def get_feasible_routes(num_students, num_schools, start_times, travel_time, coords, max_routes=10):
     print('Setting up mixed-integer program...')
@@ -22,11 +35,6 @@ def get_feasible_routes(num_students, num_schools, start_times, travel_time, coo
 
     # T = start_times
     T = np.ones(len(S)) * 2000
-
-    # x_indices = np.arange(len(O)).reshape(len(O), 1)
-    # y_indices = np.arange(len(O)).reshape(1, len(O))
-    # travel_time = x_indices * y_indices + 2
-
 
     print('Building model...')
     m = gp.Model("bus_route")
@@ -64,9 +72,10 @@ def get_feasible_routes(num_students, num_schools, start_times, travel_time, coo
     status = m.Status
     if status in [GRB.INF_OR_UNBD, GRB.INFEASIBLE, GRB.UNBOUNDED]:
         print("Model is either infeasible or unbounded.")
-    # print(coords)
+   
 
-    solutions = []
+    route_solutions = []
+    pickup_time_solutions = []
     nSolutions = min(m.SolCount, max_routes)
     for sol in range(nSolutions):
         m.setParam(GRB.Param.SolutionNumber, sol)
@@ -77,16 +86,35 @@ def get_feasible_routes(num_students, num_schools, start_times, travel_time, coo
         #add depot
         route = [1] * (len(ordering)+1)
         route[0] = coords[0]
-        
+        node_order = [0] * (len(ordering)+1)
         for i in range(len(ordering)):
              route[ordering[i]+1] = coords[i+1]
+             node_order[ordering[i]+1] = i+1
 
-        solutions.append(route)
+        route_solutions.append(route)
+        
+        pickup_times = list()
+        pickup_times.append(start_times[node_order[-1]-num_students-1])
+
+        current_time = datetime.strptime(pickup_times[0], "%H:%M:%S")
+
+        for k in range(len(node_order)-1):
+            current_time -= timedelta(seconds=travel_time[node_order[-(k+1)], node_order[-(k)]])
+            pickup_times.append(current_time.strftime("%H:%M:%S"))
+
+        pickup_time_solutions.append(pickup_times[::-1])
+        
     print('Optimization complete!')
-    return solutions
+    return route_solutions, pickup_time_solutions
 
 
 if __name__ == "__main__":
-    print(get_feasible_routes(5, 1, None))
+    num_student_locations = 5
+    num_schools = 2
 
+    G = travel_times.generate_G()
+    travel_time, coords = travel_times.calculate_travel_times(G, num_student_locations, num_schools)
+    starting_times = generate_start_times(num_schools)
+    routes, pickups = get_feasible_routes(num_student_locations, num_schools, starting_times, travel_time, coords)
+    print(routes, pickups)
     
