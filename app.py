@@ -1,7 +1,5 @@
 import osmnx as ox
-import folium
 import streamlit as st
-from streamlit_folium import st_folium
 import route_variables
 import travel_times
 import plot2
