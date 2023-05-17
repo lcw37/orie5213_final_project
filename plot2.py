@@ -130,7 +130,7 @@ def plot_our_route(G, route, color_mapping):
 
 
 
-def plot_our_routes(G, routes, coord_mapping, n_students, n_schools):
+def plot_our_routes(G, routes, color_mapping):
     print('Plotting routes...')
     figs = []
     for route in routes:
@@ -139,16 +139,16 @@ def plot_our_routes(G, routes, coord_mapping, n_students, n_schools):
         if not all(isinstance(r, tuple) for r in route):
             continue
         
-        # point color mapping
-        school_color = 'yellow'
-        student_color = 'r'
-        depot_color = 'green'
-        color_mapping = {}
-        color_mapping[coord_mapping[0]] = depot_color
-        for i in range(n_students):
-            color_mapping[coord_mapping[i+1]] = student_color
-        for i in range(n_schools):
-            color_mapping[coord_mapping[i+n_students+1]] = school_color
+        # # point color mapping
+        # school_color = 'yellow'
+        # student_color = 'r'
+        # depot_color = 'green'
+        # color_mapping = {}
+        # color_mapping[coord_mapping[0]] = depot_color
+        # for i in range(n_students):
+        #     color_mapping[coord_mapping[i+1]] = student_color
+        # for i in range(n_schools):
+        #     color_mapping[coord_mapping[i+n_students+1]] = school_color
         
         fig, ax = plot_our_route(G, route, color_mapping) # returns None, None if no path exists
         # for n in route:
@@ -157,3 +157,17 @@ def plot_our_routes(G, routes, coord_mapping, n_students, n_schools):
         if fig is not None:
             figs.append(fig)
     return figs
+
+
+def create_color_mapping(coord_mapping, n_students, n_schools):
+    # point color mapping
+    school_color = 'yellow'
+    student_color = 'r'
+    depot_color = 'green'
+    color_mapping = {}
+    color_mapping[coord_mapping[0]] = depot_color
+    for i in range(n_students):
+        color_mapping[coord_mapping[i+1]] = student_color
+    for i in range(n_schools):
+        color_mapping[coord_mapping[i+n_students+1]] = school_color
+    return color_mapping
