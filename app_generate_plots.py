@@ -41,7 +41,11 @@ def plot_points(G, coords, color_mapping, container):
     # save the coordinate graph to session_state
     st.session_state['points_fig'] = fig
     container.pyplot(st.session_state.points_fig)
-    # container.pyplot(fig)
+    
+    # create an expandable tab with the coordinates of each point
+    with st.expander('View coordinates'):
+        for c in st.session_state.coords:
+            st.markdown(f'{c}: {st.session_state.coords[c]}')
     return
 
 

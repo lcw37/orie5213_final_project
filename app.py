@@ -29,7 +29,7 @@ def main():
                        )
     
     st.title('Bus Route Generation')
-    
+        
     # ======================================
     ### 1 Route Variables:
     st.divider()
@@ -123,8 +123,6 @@ def main():
         else:
             plots_container.warning('Please generate coordinates first!')
     
-        # st.write(result[0])
-        # st.write(result[1])
 
 
 
