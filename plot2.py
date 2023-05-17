@@ -87,7 +87,7 @@ def plot_graph_routes(G, routes, route_colors="r", route_linewidths=4, **pgr_kwa
 
 
 
-def plot_our_route(G, route, coord_mapping, n_students, n_schools):
+def plot_our_route(G, route, color_mapping):
     
     route_pairs = list(zip(route[:-1], route[1:]))
 
@@ -118,16 +118,7 @@ def plot_our_route(G, route, coord_mapping, n_students, n_schools):
     color_list = [cmap(index) for index in indices]
     route_colors = [mcolors.to_hex(color) for color in color_list]
     
-    # point color mapping
-    school_color = 'yellow'
-    student_color = 'r'
-    depot_color = 'green'
-    color_mapping = {}
-    color_mapping[coord_mapping[0]] = depot_color
-    for i in range(n_students):
-        color_mapping[coord_mapping[i+1]] = student_color
-    for i in range(n_schools):
-        color_mapping[coord_mapping[i+n_students+1]] = school_color
+    
     
     
     
@@ -148,7 +139,18 @@ def plot_our_routes(G, routes, coord_mapping, n_students, n_schools):
         if not all(isinstance(r, tuple) for r in route):
             continue
         
-        fig, ax = plot_our_route(G, route, coord_mapping, n_students, n_schools) # returns None, None if no path exists
+        # point color mapping
+        school_color = 'yellow'
+        student_color = 'r'
+        depot_color = 'green'
+        color_mapping = {}
+        color_mapping[coord_mapping[0]] = depot_color
+        for i in range(n_students):
+            color_mapping[coord_mapping[i+1]] = student_color
+        for i in range(n_schools):
+            color_mapping[coord_mapping[i+n_students+1]] = school_color
+        
+        fig, ax = plot_our_route(G, route, color_mapping) # returns None, None if no path exists
         # for n in route:
             # ax.scatter(n[1], n[0], c='blue', s=100)
             # print(n)

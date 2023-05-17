@@ -129,7 +129,7 @@ def generate_random_coords(G, n_students, n_schools, depot_coords=(ymin, xmin)):
     return coords
 
 
-def calculate_travel_times(G, n_students, n_schools, depot_coords=(ymin, xmin)):
+def calculate_travel_times(G, n_students, n_schools, coords):
     """Calculate the travel times between all student and school locations.
 
     Parameters:
@@ -148,8 +148,6 @@ def calculate_travel_times(G, n_students, n_schools, depot_coords=(ymin, xmin)):
         The first row and column of the array represent the depot location, and the remaining rows and columns represent the student
         and school locations, respectively.
     """ 
-    # randomly generate student and school coordinates
-    coords = generate_random_coords(G, n_students, n_schools, depot_coords)
     
     # initialize travel_times as array of zeros
     travel_times = np.zeros((len(coords), len(coords)))
@@ -169,7 +167,7 @@ def calculate_travel_times(G, n_students, n_schools, depot_coords=(ymin, xmin)):
                     travel_times[i, j] = 1000000 # set to arbitrarily large number if no travel time is found?
         print(f'\tprogress: {i+1} / {len(coords)}')
     
-    return travel_times, coords
+    return travel_times
 
 
 def generate_random_load_times(n_students, n_schools):

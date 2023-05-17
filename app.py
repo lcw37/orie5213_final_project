@@ -4,6 +4,7 @@ import route_variables
 import travel_times
 import plot2
 import MIP
+import matplotlib.pyplot as plt
 
 
 def __init__():
@@ -16,18 +17,33 @@ def get_random_n_students():
     st.session_state["n_students"] = route_variables.random_n_students()
     return
 
+def generate_points(n_students, n_schools, mode, location_data, container):
+    G = travel_times.generate_G(mode, location_data)
+    coords = travel_times.generate_random_coords(G, n_students, n_schools, depot_coords=(40.7283, -73.94060)) # (y, x)
+    st.session_state['coords'] = coords
+    st.session_state['G'] = G
+    plot_points(G, coords, container)
+    return
 
-def generate_routes(n_students, n_schools, mode, location_data, max_routes, container):
-    
+def plot_points(G, coords, container):
+    fig, ax = ox.plot_graph(G)
+    for node in coords:
+        y, x = coords[node]
+        ax.scatter(x=x, y=y, s=200, c='r')#color_mapping[(y, x)])
+    st.session_state['points_fig'] = fig
+    container.pyplot(st.session_state.points_fig)
+    return
+
+
+def generate_routes(G, n_students, n_schools, coords, max_routes, container):
     progress_value = 0
     progress_text = "Generating graph..."
     my_bar = container.progress(progress_value, text=progress_text)
-    G = travel_times.generate_G(mode, location_data)
     progress_value += 10
     
     progress_text = 'Calculating travel times... (this may take a while!)'
     my_bar.progress(progress_value, text=progress_text)
-    travel_time_table, coords = travel_times.calculate_travel_times(G, n_students, n_schools, depot_coords=(40.7283, -73.94060)) # (y, x)
+    travel_time_table = travel_times.calculate_travel_times(G, n_students, n_schools, coords)
     progress_value += 40
 
     progress_text = 'Getting start times...'
@@ -111,6 +127,11 @@ def main():
         mode = 'bbox'
    
    
+    points_container = st.container()
+    points = points_container.button('Generate points')
+    if points:
+        coords = generate_points(n_students, n_schools, mode, location_data, points_container) # need to save this to sessionstate
+   
     # generate locations and plot on map
     plots_container = st.container()
     max_routes = plots_container.number_input('Max routes to generate:', 1, value=5)
@@ -120,7 +141,15 @@ def main():
     #                     )
     generate = plots_container.button('Generate routes')
     if generate:
-        routes, start_time_solutions = generate_routes(n_students, n_schools, mode, location_data, max_routes, plots_container)
+        routes, start_time_solutions = generate_routes(G=st.session_state.G, 
+                                                       n_students=n_students, 
+                                                       n_schools=n_schools, 
+                                                       coords=st.session_state.coords, 
+                                                       max_routes=max_routes, 
+                                                       container=plots_container)
+        plot_points(G=st.session_state.G,
+                    coords=st.session_state.coords,
+                    container=points_container)
     
         # st.write(result[0])
         # st.write(result[1])
