@@ -5,11 +5,12 @@ from app_generate_plots import *
 import streamlit as st
 
 
-def __init__():
+def _setup():
     if "n_students" not in st.session_state:
         get_random_n_students()
     if "n_schools" not in st.session_state:
         get_random_n_schools(st.session_state.n_students)
+    pass
         
 
 
@@ -35,16 +36,19 @@ def main():
     
     ### user inputs for number of students and schools
     st.header('1 Route Variables', 'route_vars')
-    ## number of schools and randomize button
+    
+    ## number of students and randomize button
     c1, c2 = st.columns(2, gap='medium')
     n_students = c1.number_input('Number of students (2-20):', 1, 20, st.session_state.n_students)
+    print(n_students)
     c2.markdown('#') # vertical spacer on right side
     c2.button('Randomize number of students', on_click=get_random_n_students)
 
+    ## number of schools and randomize button
     c1, c2 = st.columns(2, gap='medium')
     n_schools = c1.number_input('Number of schools (1-7):', 1, 7, st.session_state.n_schools)
     c2.markdown('#') # vertical spacer on right side
-    c2.button('Randomize number of schools', on_click=get_random_n_schools, args=[st.session_state.n_students])
+    c2.button('Randomize number of schools', on_click=get_random_n_schools, args=[n_students])
     
     st.divider()
     
@@ -108,5 +112,5 @@ def main():
 
 
 if __name__ == '__main__':
-    __init__()
+    _setup()
     main()

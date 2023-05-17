@@ -15,9 +15,9 @@ def get_random_n_students():
     st.session_state["n_students"] = route_variables.random_n_students()
     return
 
-def get_random_n_schools(max_schools):
+def get_random_n_schools(n_students):
     """ Randomly draws a new value for n_schools """
-    max_schools = min(7, st.session_state.n_students) # number of schools cannot exceed number of students, up to max of 7 schools
+    max_schools = min(7, n_students) # number of schools cannot exceed number of students, up to max of 7 schools
     st.session_state["n_schools"] = np.random.randint(1, max_schools+1)
     return
 
