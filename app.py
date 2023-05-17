@@ -107,18 +107,21 @@ def main():
     generate = plots_container.button('Generate routes')
     if generate:
         if 'coords' in st.session_state: # check that coordinates have been generated first
-            plot_points(G=st.session_state.G,
-                        coords=st.session_state.coords,
-                        color_mapping=st.session_state.color_mapping, 
-                        container=points_container)
-            routes, start_time_solutions = generate_routes(G=st.session_state.G, 
-                                                        n_students=n_students, 
-                                                        n_schools=n_schools, 
-                                                        coords=st.session_state.coords, 
-                                                        max_routes=max_routes, 
-                                                        container=plots_container)
+            if len(st.session_state['coords']) == (n_students + n_schools + 1):
+                plot_points(G=st.session_state.G,
+                            coords=st.session_state.coords,
+                            color_mapping=st.session_state.color_mapping, 
+                            container=points_container)
+                routes, start_time_solutions = generate_routes(G=st.session_state.G, 
+                                                            n_students=n_students, 
+                                                            n_schools=n_schools, 
+                                                            coords=st.session_state.coords, 
+                                                            max_routes=max_routes, 
+                                                            container=plots_container)
+            else:
+                plots_container.warning('Please regenerate coordinates after updating parameters!')
         else:
-            plots_container.write('Generate points first!')
+            plots_container.warning('Please generate coordinates first!')
     
         # st.write(result[0])
         # st.write(result[1])
