@@ -103,7 +103,7 @@ def main():
         l_form = st.form('l_form')
         l_form.caption('Location Name')
         # user inputs for location and distance
-        location = l_form.text_input('Location:', 'Queens, New York', disabled=mode)
+        location = l_form.text_input('Location:', 'Greenpoint, New York', disabled=mode)
         distance = l_form.slider('Distance (meters):', 1000, 5000, 2000, disabled=mode)
         submit = l_form.form_submit_button(label='Update', disabled=mode)
         

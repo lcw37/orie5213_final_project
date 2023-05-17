@@ -10,14 +10,8 @@ def diff(first, second):
         return [item for item in first if item not in second]
 
 def generate_start_times(num_schools):
-    start_time = datetime.strptime("07:00:00", "%H:%M:%S")
-    end_time = datetime.strptime("09:00:00", "%H:%M:%S")
-
-    time_list = []
-    current_time = end_time
-    for _ in range(num_schools):
-        time_list.append(current_time.strftime("%H:%M:%S"))
-        current_time -= timedelta(minutes=30)
+    time_range = ["07:30:00", "08:00:00", "08:30:00", "09:00:00"]
+    time_list = np.random.choice(time_range, num_schools)
     
     return time_list
 
@@ -33,18 +27,21 @@ def get_feasible_routes(num_students, num_schools, start_times, travel_time, coo
     A = np.zeros((len(L), choices.max() + 1))
     A[np.arange(choices.size)+1, choices] = 1
 
-    # T = start_times
-    T = np.ones(len(S)) * 2000
+    school_start_times = np.ones(len(L)) * 200000
 
     print('Building model...')
     m = gp.Model("bus_route")
     m.Params.OutputFlag = 0 
-    #m.Params.PoolSolutions = 10
-    #m.Params.PoolSearchMode = 2
+    m.Params.PoolSearchMode = 1
+    m.Params.PoolSolutions = max_routes
 
     X = m.addVars(L, L, O, vtype=GRB.BINARY, name="X")
 
     Y = m.addVars(diff(L,d), vtype=GRB.INTEGER, name="Y")
+
+    # K = m.addVars(L, vtype=GRB.CONTINUOUS, name="K")
+
+    m.setObjective(gp.quicksum(travel_time[i,j] * X[i,j,o] for i in L for j in L for o in O), GRB.MINIMIZE)
 
     m.addConstr(gp.quicksum(X[0,j,0] for j in L) == 1 , name="DepotFirst")
 
@@ -63,8 +60,9 @@ def get_feasible_routes(num_students, num_schools, start_times, travel_time, coo
     m.addConstrs((Y[i] * A[i,s] <= Y[s] for i in P for s in S), name="PickupOrder")
 
     # m.addConstrs((gp.quicksum(travel_time[i,j] * X[i,j,o] for i in L for j in L for o in O[:Y[s]]) <= T[s] for s in S), name="StartTimes")
+    
+    # m.addConstrs((gp.quicksum(travel_time[i,j] * X[i,j,o] for i in L for j in L for o in O[:t]) == K[t] for t in L), name="Yas")
 
-    m.setObjective(gp.quicksum(travel_time[i,j] * X[i,j,o] for i in L for j in L for o in O), GRB.MINIMIZE)
 
     print('Optimizing...')
     m.optimize()
@@ -94,12 +92,15 @@ def get_feasible_routes(num_students, num_schools, start_times, travel_time, coo
         route_solutions.append(route)
         
         pickup_times = list()
-        pickup_times.append(start_times[node_order[-1]-num_students-1])
 
-        current_time = datetime.strptime(pickup_times[0], "%H:%M:%S")
+        school_dropoff_buffer = 5 # minutes
+        student_loading_buffer = 2 # minutes
+        
+        current_time = datetime.strptime(start_times[node_order[-1]-num_students-1], "%H:%M:%S") - timedelta(minutes=school_dropoff_buffer)
+        pickup_times.append(current_time.strftime("%H:%M:%S"))
 
         for k in range(len(node_order)-1):
-            current_time -= timedelta(seconds=travel_time[node_order[-(k+1)], node_order[-(k)]])
+            current_time -= timedelta(seconds=(travel_time[node_order[-(k+1)], node_order[-(k)]] + student_loading_buffer))
             pickup_times.append(current_time.strftime("%H:%M:%S"))
 
         pickup_time_solutions.append(pickup_times[::-1])
@@ -112,8 +113,13 @@ if __name__ == "__main__":
     num_student_locations = 5
     num_schools = 2
 
-    G = travel_times.generate_G()
-    travel_time, coords = travel_times.calculate_travel_times(G, num_student_locations, num_schools)
+    xmin, xmax = -73.961004, -73.906759
+    ymin, ymax = 40.662075, 40.708213
+
+    
+    G = travel_times.generate_G(mode = 'bbox', location_data = (ymax, ymin, xmin, xmax))
+    coords = travel_times.generate_random_coords(G, num_student_locations, num_schools, depot_coords=(40.7283, -73.94060))
+    travel_time = travel_times.calculate_travel_times(G, num_student_locations, num_schools, coords)
     starting_times = generate_start_times(num_schools)
     routes, pickups = get_feasible_routes(num_student_locations, num_schools, starting_times, travel_time, coords)
     print(routes, pickups)

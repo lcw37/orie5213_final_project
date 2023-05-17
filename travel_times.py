@@ -191,7 +191,7 @@ def generate_random_load_times(n_students, n_schools):
     
     # draw student and school load times from exponential distributions, add 1 min
     student_load_times = np.random.exponential(scale=1, size=n_students) + 1
-    school_offload_times = np.random.exponential(scale=1, size=n_schools) + 1
+    school_offload_times = np.random.exponential(scale=3, size=n_schools) + 1
     
     # add load times to location-loadtime mapping (convert to seconds)
     for i in range(n_students):
@@ -203,4 +203,5 @@ def generate_random_load_times(n_students, n_schools):
 
 
 if __name__ == "__main__":
-    print(calculate_travel_times(5,2))
+    # print(calculate_travel_times(5,2))
+    print(generate_random_load_times(5,2))
