@@ -3,9 +3,12 @@ import osmnx as ox
 import numpy as np
 
 
-xmin, xmax = -73.961004, -73.906759
-ymin, ymax = 40.662075, 40.708213
+xmin, xmax = -73.92860, -73.96260
+ymin, ymax = 40.7063, 40.7303
 
+# (40.7063, -73.92860)
+# (40.7283, -73.94060)
+# (40.7403, -73.96260)
 
 def generate_G(mode, location_data):
     # if given a bbox:

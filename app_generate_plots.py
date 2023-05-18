@@ -68,6 +68,14 @@ def generate_routes(G, n_students, n_schools, coords, max_routes, container):
     routes, start_time_solutions  = MIP.get_feasible_routes(n_students, n_schools, starting_times, travel_time_table, coords, max_routes)
     progress_value += 20
 
+    # check for accidental infeasible routes (integers included in the route when they shouldn't be)
+    _routes = []
+    for route in routes:
+        print(route)
+        if all(isinstance(r, tuple) for r in route):
+            _routes.append(route)
+    routes = _routes
+    
     progress_text = 'Plotting routes...'
     my_bar.progress(progress_value, text=progress_text)
     plots = plot2.plot_our_routes(G, routes, st.session_state.color_mapping)
@@ -86,10 +94,10 @@ def generate_routes(G, n_students, n_schools, coords, max_routes, container):
             # plot routes and write to zip
             for i in range(len(plots)):
                 container.pyplot(plots[i]) # plot route
-                create_route_df(routes[i], start_time_solutions[i], coords, route_num=i+1)
+                create_route_df(routes[i], start_time_solutions[i], coords)
                 csv_zip.writestr(f"route_{i+1}.csv", pd.DataFrame(st.session_state.route_data).to_csv())
         # create download button
-        st.download_button(
+        container.download_button(
             label="Download zip",
             data=buf.getvalue(),
             file_name="routes.zip",
@@ -117,12 +125,15 @@ def create_coords_df(coords):
         st.dataframe(data, use_container_width=True)
         
         
-def create_route_df(route, start_times, coords_mapping, route_num):
+def create_route_df(route, start_times, coords_mapping):
     # first flip the coords_mapping from id:coords -> coords:id
     coords_mapping = {v: k for k, v in coords_mapping.items()}
     # build data
     data = []
-    for (pair), t in zip(route, start_times):
+    print('==== ROUTE', route)
+    print('---- TIMES', start_times)
+    for pair, t in zip(route, start_times):
+        print('==== pair, t', pair, t)
         nodeid = coords_mapping[pair]
         (y, x) = pair
         data.append([nodeid, y, x, t])

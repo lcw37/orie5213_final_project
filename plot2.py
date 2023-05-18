@@ -104,19 +104,22 @@ def plot_our_route(G, route, color_mapping):
     # assign colors to route legs
     n_colors = len(route_legs)
     
+    ## alternate red -> orange -> yellow
     # colors = ['r', 'orange', 'yellow']
     # route_colors = []
     # for i in range(len(route_legs)):
     #     route_colors.append(colors[i % len(colors)])
         
-    # startcolor = mcolors.to_rgb('lime')
-    # endcolor = mcolors.to_rgb('cornflowerblue')
-    # route_colors = [mcolors.to_hex(color) for color in mcolors.LinearSegmentedColormap.from_list("", [startcolor, endcolor], n_colors)(range(n_colors))]
+    ## lime -> blue
+    startcolor = mcolors.to_rgb('lime')
+    endcolor = mcolors.to_rgb('cornflowerblue')
+    route_colors = [mcolors.to_hex(color) for color in mcolors.LinearSegmentedColormap.from_list("", [startcolor, endcolor], n_colors)(range(n_colors))]
     
-    cmap = cm.get_cmap('gist_rainbow')
-    indices = np.linspace(0, 1, n_colors)
-    color_list = [cmap(index) for index in indices]
-    route_colors = [mcolors.to_hex(color) for color in color_list]
+    ## rainbow
+    # cmap = cm.get_cmap('gist_rainbow')
+    # indices = np.linspace(0, 1, n_colors)
+    # color_list = [cmap(index) for index in indices]
+    # route_colors = [mcolors.to_hex(color) for color in color_list]
     
     
     
