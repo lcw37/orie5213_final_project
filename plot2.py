@@ -125,7 +125,7 @@ def plot_our_route(G, route, color_mapping):
     # plot route
     fig, ax = plot_graph_routes(G, route_legs, route_colors)
     for (y, x) in route:
-        ax.scatter(x=x, y=y, s=200, c=color_mapping[(y, x)])
+        ax.scatter(x=x, y=y, s=75, c=color_mapping[(y, x)])
     return fig, ax
 
 
@@ -138,22 +138,9 @@ def plot_our_routes(G, routes, color_mapping):
         # initial check
         if not all(isinstance(r, tuple) for r in route):
             continue
-        
-        # # point color mapping
-        # school_color = 'yellow'
-        # student_color = 'r'
-        # depot_color = 'green'
-        # color_mapping = {}
-        # color_mapping[coord_mapping[0]] = depot_color
-        # for i in range(n_students):
-        #     color_mapping[coord_mapping[i+1]] = student_color
-        # for i in range(n_schools):
-        #     color_mapping[coord_mapping[i+n_students+1]] = school_color
-        
+ 
         fig, ax = plot_our_route(G, route, color_mapping) # returns None, None if no path exists
-        # for n in route:
-            # ax.scatter(n[1], n[0], c='blue', s=100)
-            # print(n)
+
         if fig is not None:
             figs.append(fig)
     return figs

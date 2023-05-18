@@ -37,7 +37,11 @@ def get_feasible_routes(num_students, num_schools, start_times, travel_time, coo
     school_latest_dropoff_times = school_start_times - (school_latest_dropoff_buffer*60) 
 
     choices = np.random.choice(S, num_students)
-    A = np.zeros((len(L), choices.max() + 1))
+    # A = np.zeros((len(L), choices.max() + 1))
+    # ^ index out-of-bounds error in PickupOrder constraint occurs when not all schools are selected in choices
+    while choices.max() + 1 != len(L):
+        choices = np.random.choice(S, num_students)
+    A = np.zeros((len(L), len(L))) 
     A[np.arange(choices.size)+1, choices] = 1
 
     for j in (P+S):
@@ -72,7 +76,8 @@ def get_feasible_routes(num_students, num_schools, start_times, travel_time, coo
     m.addConstrs((gp.quicksum(X[i,j,o] for i in L) - gp.quicksum(X[j,k,o+1] for k in L) == 0 for j in L for o in O[:-2]), name="Continuity")
 
     m.addConstrs((gp.quicksum(o * X[i,j,o] for i in L for o in O) == Y[j] for j in diff(L,d)), name="AssignOrder")
-
+    print(len(A), len(A[0]))
+    print(len(Y))
     m.addConstrs((Y[i] * A[i,s] <= Y[s] for i in P for s in S), name="PickupOrder")
 
     m.addConstrs((K[i] + travel_time[i,j] - BigM * (1- gp.quicksum(X[i,j,o] for o in O)) <= K[j] for i in L for j in L), name="StartTimes")

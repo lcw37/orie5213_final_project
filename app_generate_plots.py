@@ -6,7 +6,10 @@ import MIP
 import streamlit as st
 import osmnx as ox
 import numpy as np
+import pandas as pd
 
+import io
+import zipfile
 
 
 
@@ -37,16 +40,10 @@ def plot_points(G, coords, color_mapping, container):
     fig, ax = ox.plot_graph(G)
     for node in coords:
         y, x = coords[node]
-        ax.scatter(x=x, y=y, s=200, c=color_mapping[(y, x)])
+        ax.scatter(x=x, y=y, s=75, c=color_mapping[(y, x)])
     # save the coordinate graph to session_state
     st.session_state['points_fig'] = fig
     container.pyplot(st.session_state.points_fig)
-    
-    # create an expandable tab with the coordinates of each point
-    with st.expander('View coordinates'):
-        for c in st.session_state.coords:
-            st.markdown(f'{c}: {st.session_state.coords[c]}')
-    return
 
 
 def generate_routes(G, n_students, n_schools, coords, max_routes, container):
@@ -82,12 +79,57 @@ def generate_routes(G, n_students, n_schools, coords, max_routes, container):
     if len(plots) > 0:
         container.write('Number of routes generated:')
         container.write(len(plots))
-        for i in range(len(plots)):
-            container.pyplot(plots[i])
-            container.write(routes[i])
-            container.write(start_time_solutions[i])
-            # container.write(p)
+        
+        # download routes as zip
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "x") as csv_zip:
+            # plot routes and write to zip
+            for i in range(len(plots)):
+                container.pyplot(plots[i]) # plot route
+                create_route_df(routes[i], start_time_solutions[i], coords, route_num=i+1)
+                csv_zip.writestr(f"route_{i+1}.csv", pd.DataFrame(st.session_state.route_data).to_csv())
+        # create download button
+        st.download_button(
+            label="Download zip",
+            data=buf.getvalue(),
+            file_name="routes.zip",
+            mime="application/zip",
+        )
+                
     else:
         container.write('No feasible routes found.')
         
     return routes, start_time_solutions
+
+
+def create_coords_df(coords):
+    # build a DataFrame of the coordinates and save to session_state
+    data = []
+    for nodeid in coords:
+        (y, x) = coords[nodeid]
+        data.append([nodeid, y, x])
+    data = pd.DataFrame(data, columns=['Node ID', 'Latitude (y)', 'Longitude (x)'])
+    # data.index.name = 'Node ID'
+    st.session_state['coords_data'] = data
+    
+    # create an expandable tab with the coordinates of each point
+    with st.expander('View coordinates'):
+        st.dataframe(data, use_container_width=True)
+        
+        
+def create_route_df(route, start_times, coords_mapping, route_num):
+    # first flip the coords_mapping from id:coords -> coords:id
+    coords_mapping = {v: k for k, v in coords_mapping.items()}
+    # build data
+    data = []
+    for (pair), t in zip(route, start_times):
+        nodeid = coords_mapping[pair]
+        (y, x) = pair
+        data.append([nodeid, y, x, t])
+    data = pd.DataFrame(data, columns=['Node ID', 'Latitude (y)', 'Longitude (x)', 'Arrival Time'])
+    st.session_state['route_data'] = data
+    
+    # create an expandable tab with the coordinates/times of each route
+    with st.expander('View coordinates'):
+        st.dataframe(data, use_container_width=True)
+    

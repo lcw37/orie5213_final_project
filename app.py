@@ -3,6 +3,7 @@ import travel_times
 from app_generate_plots import *
 
 import streamlit as st
+import pandas as pd
 
 
 def _setup():
@@ -37,7 +38,7 @@ def main():
     
     ## number of students and randomize button
     c1, c2 = st.columns(2, gap='medium')
-    n_students = c1.number_input('Number of students (2-20):', 1, 20, st.session_state.n_students)
+    n_students = c1.number_input('Number of students (2-22):', 1, 22, st.session_state.n_students)
     c2.markdown('#') # vertical spacer on right side
     c2.button('Randomize number of students', on_click=get_random_n_students)
 
@@ -91,10 +92,7 @@ def main():
     st.header('3 Generate Points', 'points')
         
     points = st.button('Generate points')
-    points_container = st.empty()
-    if points:
-        with st.spinner(f'Generating graph with {n_students} students and {n_schools} schools...'):
-            generate_points(n_students, n_schools, mode, location_data, points_container) # need to save this to session_state
+    points_container = st.container()
 
     # ======================================
     ### 4 Generate Routes
@@ -105,19 +103,45 @@ def main():
     plots_container = st.container() # TODO st.empty()?
     max_routes = plots_container.number_input('Max routes to generate:', 1, value=5)
     generate = plots_container.button('Generate routes')
+    
+    
+    # when "Generate Points" is clicked:
+    if points:
+        with points_container:
+            with st.spinner(f'Generating graph with {n_students} students and {n_schools} schools...'):
+                generate_points(n_students, n_schools, mode, location_data, points_container)
+            
+            # download coords button
+            create_coords_df(st.session_state.coords)
+            data = st.session_state['coords_data'].to_csv(index=False).encode('utf-8')
+            st.download_button("Download coordinates as csv",
+                            data,
+                            "coords.csv",
+                            "text/csv",
+                            key='download-coords-csv')
+    
+    # when "Generate Routes" is clicked:
     if generate:
         if 'coords' in st.session_state: # check that coordinates have been generated first
             if len(st.session_state['coords']) == (n_students + n_schools + 1):
-                plot_points(G=st.session_state.G,
-                            coords=st.session_state.coords,
-                            color_mapping=st.session_state.color_mapping, 
-                            container=points_container)
-                routes, start_time_solutions = generate_routes(G=st.session_state.G, 
-                                                            n_students=n_students, 
-                                                            n_schools=n_schools, 
-                                                            coords=st.session_state.coords, 
-                                                            max_routes=max_routes, 
-                                                            container=plots_container)
+                with plots_container:
+                            
+                    # generate routes
+                    routes, start_time_solutions = generate_routes(G=st.session_state.G, 
+                                                                n_students=n_students, 
+                                                                n_schools=n_schools, 
+                                                                coords=st.session_state.coords, 
+                                                                max_routes=max_routes, 
+                                                                container=plots_container)
+                    
+                    
+                # reload the coords graph in section 3
+                with points_container:
+                    plot_points(G=st.session_state.G,
+                                coords=st.session_state.coords,
+                                color_mapping=st.session_state.color_mapping, 
+                                container=points_container)
+                    create_coords_df(st.session_state.coords)
             else:
                 plots_container.warning('Please regenerate coordinates after updating parameters!')
         else:
